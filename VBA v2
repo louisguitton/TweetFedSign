@@ -1,0 +1,66 @@
+' A subroutine is a script.
+Sub Application_ItemSend(ByVal Item As Object, Cancel As Boolean)
+    ' Validate that the item sent is an email.
+    If Item.Class <> olMail Then Exit Sub
+
+    Const SearchString = "%tweet_feed%"
+    Const ExeFile = "C:\Users\gu81sgp\TweetFedSign\read_feed.exe"
+
+    If InStr(Item.Body, SearchString) Then
+        
+        If FileOrDirExists(ExeFile) = False Then ' see function below
+            MsgBox ("Exe file wasn't found! Canceling message")
+            Cancel = True
+        Else
+        
+        
+            RunExeFile (ExeFile)
+            Dim TxtFile As String
+            TxtFile = "C:\Users\gu81sgp\TweetFedSign\tweet.txt"
+             
+            Dim lines() As String
+            Dim numLines As Integer
+            numLines = 0
+
+            ' Open the file for reading
+            Open TxtFile For Input As #1
+
+                ' Go over each line in the file and save it in the array + count it
+                Do Until EOF(1)
+                    ReDim Preserve lines(numLines + 1)
+                    Line Input #1, lines(numLines)
+                    numLines = numLines + 1
+                Loop
+
+            Close #1
+
+            ' Get the random line number
+            Dim randLine As Integer
+            randLine = Int(numLines * Rnd())
+
+            ' Insert the random quote
+            Item.HTMLBody = Replace(Item.HTMLBody, SearchString, lines(randLine))
+        End If
+    End If
+End Sub
+
+' copied code from the forum
+Function FileOrDirExists(PathName As String)
+    Dim iTemp As Integer
+
+    On Error Resume Next
+    iTemp = GetAttr(PathName)
+
+    Select Case Err.Number
+    Case Is = 0
+        FileOrDirExists = True
+    Case Else
+        FileOrDirExists = False
+    End Select
+
+    On Error GoTo 0
+End Function
+
+Function RunExeFile(PathName As String)
+    Shell PathName
+End Function
